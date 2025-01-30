@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> zzz-zephyr </title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 15px;
+            background-color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .nav a {
+            text-decoration: none;
+            color: #007BFF;
+            font-size: 1.2em;
+            padding: 5px 15px;
+        }
+        .nav a:hover {
+            color: #0056b3;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin: 30px 0;
+            color: #333;
+        }
+        table {
+            width: 80%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        .search {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .search input {
+            padding: 10px;
+            width: 250px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 0 5px;
+        }
+        .search button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .search button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">首页</a>
+        <a href="countries.html">国家</a>
+        <a href="ratings.html">评分</a>
+    </div>
+    
+    <h1>豆瓣书籍 Top250 书籍</h1>
+    
+    <div class="search">
+        <input type="text" id="search-title" placeholder="输入书名进行检索">
+        <input type="text" id="search-author" placeholder="输入作者进行检索">
+        <input type="text" id="search-country" placeholder="输入国家进行检索">
+        <button onclick="searchBooks()">检索</button>
+    </div>
+    
+    <table id="csv-table"></table>
+    
+    <script>
+        let bookData = [];
+        let bookTitleField = "";
+        let bookAuthorField = "";
+        let bookCountryField = "";
+
+        Papa.parse('https://raw.githubusercontent.com/zyj49628/project/main/books.csv', {
+            download: true,
+            header: true,
+            complete: function(results) {
+                console.log(results);
+                bookData = results.data;
+                var table = document.getElementById("csv-table");
+
+                const keys = Object.keys(results.data[0]);
+                bookTitleField = keys.find(key => key.includes("名称")) || keys[0];
+                bookAuthorField = keys.find(key => key.includes("作者")) || keys[1];
+                bookCountryField = keys.find(key => key.includes("国家")) || keys[2];
+
+                var headerRow = table.insertRow();
+                keys.forEach(function(key) {
+                    var cell = headerRow.insertCell();
+                    cell.textContent = key;
+                });
+                headerRow.style.backgroundColor = "#e0e0e0";
+
+                results.data.forEach(function(row) {
+                    var tableRow = table.insertRow();
+                    Object.values(row).forEach(function(cellData) {
+                        var cell = tableRow.insertCell();
+                        cell.textContent = cellData || "";
+                    });
+                });
+            }
+        });
+
+        function searchBooks() {
+            const titleValue = document.getElementById('search-title').value.toLowerCase();
+            const authorValue = document.getElementById('search-author').value.toLowerCase();
+            const countryValue = document.getElementById('search-country').value.toLowerCase();
+            const table = document.getElementById("csv-table");
+
+            if (!bookData.length || !bookTitleField || !bookAuthorField || !bookCountryField) {
+                alert("数据尚未加载或未找到必要字段。");
+                return;
+            }
+
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+
+            bookData.filter(row => {
+                const titleMatch = (row[bookTitleField] || "").toLowerCase().includes(titleValue);
+                const authorMatch = (row[bookAuthorField] || "").toLowerCase().includes(authorValue);
+                const countryMatch = (row[bookCountryField] || "").toLowerCase().includes(countryValue);
+                return titleMatch && authorMatch && countryMatch;
+            }).forEach(function(row) {
+                var tableRow = table.insertRow();
+                Object.values(row).forEach(function(cellData) {
+                    var cell = tableRow.insertCell();
+                    cell.textContent = cellData || "";
+                });
+            });
+        }
+    </script>
+</body>
+</html>
